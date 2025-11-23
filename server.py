@@ -9,9 +9,8 @@ app = FastAPI()
 
 # --- Configuration ---
 # LCM-Dreamshaper is the best balance of speed/quality for CPU
-MODEL_ID = "SimianLuo/LCM_Dreamshaper_v7" 
-USE_OPEN VINO = True # Critical for CPU speed
-
+MODEL_ID = "SimianLuo/LCM_Dreamshaper_v7"
+USE_OPENVINO = True # Critical for CPU speed
 # Global pipeline variable
 pipeline = None
 
@@ -25,20 +24,20 @@ class GenerateRequest(BaseModel):
 def load_model():
     global pipeline
     print("⏳ Loading FastSD CPU Model... (This may take time on first run)")
-    
+
     lcm_setting = LCMDiffusionSetting(
         lcm_model_id=MODEL_ID,
         use_openvino=True,
         use_offline_model=False,
         use_tiny_auto_encoder=True, # SAVES RAM
     )
-    
+
     pipeline = LCM(
         lcm_setting.lcm_model_id,
         lcm_setting.use_openvino,
         lcm_setting.use_local_model,
     )
-    
+
     # Initialize/Warmup
     pipeline.init(
         lcm_setting.diffusion_task,
