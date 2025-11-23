@@ -19,10 +19,10 @@ WORKDIR /app/stable-diffusion.cpp
 # 3. Build the binary
 RUN mkdir build && cd build && cmake .. && cmake --build . --config Release
 
-# 4. Download Model (Using a reliable mirror)
+# 4. Download LCM Model (Optimized for 4-step generation)
 WORKDIR /app/models
-# FIX: Switched to second-state mirror which is more reliable for automated downloads
-RUN wget -O sd-v1-5-q5.gguf https://huggingface.co/second-state/stable-diffusion-v1-5-GGUF/resolve/main/stable-diffusion-v1-5-pruned-emaonly-Q5_0.gguf
+# We use the Q4_K_M quantized version (~2.4GB) which is fast and low RAM
+RUN wget -O lcm-dreamshaper-v7-q4.gguf https://huggingface.co/tensorblock/LCM_Dreamshaper_v7-GGUF/resolve/main/LCM_Dreamshaper_v7.Q4_K_M.gguf
 
 # 5. Setup Node Server
 WORKDIR /app
