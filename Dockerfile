@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Clone stable-diffusion.cpp (The C++ Engine)
-# We clone a specific commit to ensure this script works forever
-RUN git clone https://github.com/leejet/stable-diffusion.cpp.git
+# --recursive is REQUIRED to get the submodules like ggml
+RUN git clone --recursive https://github.com/leejet/stable-diffusion.cpp.git
 WORKDIR /app/stable-diffusion.cpp
 
 # 3. Build the binary
