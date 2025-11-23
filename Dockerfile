@@ -21,6 +21,7 @@ COPY server.py .
 
 # Expose the port
 EXPOSE 8000
+ENV PYTHONPATH=/app
 
 # Run the API server
 CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
