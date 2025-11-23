@@ -1,31 +1,36 @@
-FROM python:3.10-slim
+FROM node:20-slim
 
-# 1. Setup the environment
 WORKDIR /app
 
-# 2. Install system dependencies
+# 1. Install Build Tools (C++ Compiler)
 RUN apt-get update && apt-get install -y \
     git \
-    libgl1 \
-    libglib2.0-0 \
+    cmake \
+    build-essential \
+    wget \
+    libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Clone into a specific subfolder to keep paths clean
-RUN git clone https://github.com/rupeshs/fastsdcpu.git fastsdcpu
+# 2. Clone stable-diffusion.cpp (The C++ Engine)
+# We clone a specific commit to ensure this script works forever
+RUN git clone https://github.com/leejet/stable-diffusion.cpp.git
+WORKDIR /app/stable-diffusion.cpp
 
-# 4. Set the working directory TO that folder
-WORKDIR /app/fastsdcpu
+# 3. Build the binary
+RUN mkdir build && cd build && cmake .. && cmake --build . --config Release
 
-# 5. CRITICAL: Tell Python that this folder is the root for imports
-ENV PYTHONPATH=/app/fastsdcpu
+# 4. Download a Lightweight Model (SD 1.5 Quantized - Only ~2GB file size)
+# This model is pre-compressed for CPU usage.
+WORKDIR /app/models
+RUN wget -O sd-v1-5-q5.gguf https://huggingface.co/leejet/stable-diffusion.cpp-quantized/resolve/main/sd-v1-5-pruned-q5_0.gguf
 
-# 6. Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir fastapi uvicorn
+# 5. Setup Node Server
+WORKDIR /app
+COPY package.json .
+RUN npm install
 
-# 7. Copy our server script into this folder
-COPY server.py .
+COPY server.js .
 
-# 8. Run the server
+# 6. Run
 EXPOSE 8000
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["node", "server.js"]
