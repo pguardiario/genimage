@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  fastsd-api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist huggingface cache so we don't download 4GB every restart
+      - ./hf_cache:/root/.cache/huggingface 
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G # Leave 2GB for your OS/Node app
+
