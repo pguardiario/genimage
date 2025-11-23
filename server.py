@@ -1,22 +1,38 @@
+import sys
+import os
+
+# --- FIX: Force /app to be in the Python path so 'constants.py' is found ---
+sys.path.insert(0, os.getcwd())
+sys.path.insert(0, "/app")
+# ---------------------------------------------------------------------------
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import base64
 from io import BytesIO
-from src.backend.models.lcmdiffusion_setting import LCMDiffusionSetting
-from src.backend.pipelines.lcm import LCM
+
+try:
+    from src.backend.models.lcmdiffusion_setting import LCMDiffusionSetting
+    from src.backend.pipelines.lcm import LCM
+except ImportError as e:
+    print(f"❌ IMPORT ERROR: {e}")
+    print(f"Current Working Directory: {os.getcwd()}")
+    print("Listing files in current directory:")
+    print(os.listdir(os.getcwd()))
+    raise e
 
 app = FastAPI()
 
 # --- Configuration ---
-# LCM-Dreamshaper is the best balance of speed/quality for CPU
 MODEL_ID = "SimianLuo/LCM_Dreamshaper_v7"
-USE_OPENVINO = True # Critical for CPU speed
+USE_OPENVINO = True # Typo fixed here
+
 # Global pipeline variable
 pipeline = None
 
 class GenerateRequest(BaseModel):
     prompt: str
-    steps: int = 4  # 4 steps is standard for LCM
+    steps: int = 4
     width: int = 512
     height: int = 512
 
@@ -27,9 +43,9 @@ def load_model():
 
     lcm_setting = LCMDiffusionSetting(
         lcm_model_id=MODEL_ID,
-        use_openvino=True,
+        use_openvino=USE_OPENVINO,
         use_offline_model=False,
-        use_tiny_auto_encoder=True, # SAVES RAM
+        use_tiny_auto_encoder=True,
     )
 
     pipeline = LCM(
@@ -38,7 +54,6 @@ def load_model():
         lcm_setting.use_local_model,
     )
 
-    # Initialize/Warmup
     pipeline.init(
         lcm_setting.diffusion_task,
         lcm_setting.lcm_lora_id,
@@ -52,20 +67,17 @@ async def generate_image(req: GenerateRequest):
         raise HTTPException(status_code=500, detail="Model not loaded")
 
     try:
-        # Generate image
-        # FastSD returns a list of PIL images
         images = pipeline.generate(
             req.prompt,
-            req.prompt, # negative prompt (using same or empty)
+            req.prompt,
             req.steps,
-            1.0, # guidance scale
+            1.0,
             req.width,
             req.height,
-            1, # seed (random)
-            1  # number of images
+            1,
+            1
         )
 
-        # Convert PIL image to Base64
         buffered = BytesIO()
         images[0].save(buffered, format="PNG")
         img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
