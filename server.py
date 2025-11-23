@@ -1,33 +1,35 @@
-import sys
 import os
-
-# --- FIX: Force /app to be in the Python path so 'constants.py' is found ---
-sys.path.insert(0, os.getcwd())
-sys.path.insert(0, "/app")
-# ---------------------------------------------------------------------------
-
+import sys
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import base64
 from io import BytesIO
 
+# --- Debug: Verify we are in the right place ---
+print(f"📂 Current Directory: {os.getcwd()}")
+if "constants.py" in os.listdir():
+    print("✅ Found constants.py in root!")
+else:
+    print("❌ constants.py NOT FOUND in root! Files present:")
+    print(os.listdir())
+# -----------------------------------------------
+
+# Import the model
 try:
     from src.backend.models.lcmdiffusion_setting import LCMDiffusionSetting
     from src.backend.pipelines.lcm import LCM
+    print("✅ FastSD libraries imported successfully.")
 except ImportError as e:
-    print(f"❌ IMPORT ERROR: {e}")
-    print(f"Current Working Directory: {os.getcwd()}")
-    print("Listing files in current directory:")
-    print(os.listdir(os.getcwd()))
-    raise e
+    print(f"❌ CRITICAL IMPORT ERROR: {e}")
+    # Force crash so we see logs
+    sys.exit(1)
 
 app = FastAPI()
 
 # --- Configuration ---
 MODEL_ID = "SimianLuo/LCM_Dreamshaper_v7"
-USE_OPENVINO = True # Typo fixed here
+USE_OPENVINO = True
 
-# Global pipeline variable
 pipeline = None
 
 class GenerateRequest(BaseModel):
@@ -39,7 +41,7 @@ class GenerateRequest(BaseModel):
 @app.on_event("startup")
 def load_model():
     global pipeline
-    print("⏳ Loading FastSD CPU Model... (This may take time on first run)")
+    print("⏳ Loading FastSD CPU Model...")
 
     lcm_setting = LCMDiffusionSetting(
         lcm_model_id=MODEL_ID,
@@ -59,7 +61,7 @@ def load_model():
         lcm_setting.lcm_lora_id,
         lcm_setting.use_tiny_auto_encoder,
     )
-    print("✅ Model Loaded and Ready.")
+    print("✅ Model Ready.")
 
 @app.post("/generate")
 async def generate_image(req: GenerateRequest):
