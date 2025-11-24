@@ -4,6 +4,9 @@ services:
     build: .
     ports:
       - "8000:8000"
+    volumes:
+      # MAP THE HOST FOLDER TO THE CONTAINER
+      - ./models:/app/models
     restart: always
     deploy:
       resources:

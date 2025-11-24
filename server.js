@@ -8,8 +8,9 @@ app.use(express.json());
 
 // --- CONFIG CHANGES FOR LCM ---
 const SD_BINARY_PATH = '/app/stable-diffusion.cpp/build/bin/sd';
-// 1. Point to the new LCM model
-const MODEL_PATH = '/app/models/lcm-dreamshaper-v7-q4.gguf';
+
+// MATCH THIS TO THE FILENAME YOU DOWNLOADED IN STEP 1:
+const MODEL_PATH = '/app/models/lcm-model.gguf';
 const OUTPUT_DIR = '/app/output';
 
 if (!fs.existsSync(OUTPUT_DIR)) {
